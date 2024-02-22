@@ -21,28 +21,33 @@ Future<bool> login(Page page) async {
     }
   }
 
-  page
+  await page
       .waitForSelector("button.navBar_link.navBar_link_Login")
-      .then((loginButton) => loginButton?.click());
+      .then((loginButton) {
+    if (loginButton == null) {
+      throw Exception("找不到登录按钮");
+    } else {
+      print("点击登录");
+      loginButton.click();
+    }
+  });
 
-  page
-      .waitForSelector(
-    "div.login_dialog_qrcode > img",
-    timeout: const Duration(seconds: 1),
-  )
-      .then((imgElem) {
+  await page.waitForSelector("div.login_dialog_qrcode > img").then((imgElem) {
+    print(imgElem.toString());
     imgElem?.property("src").then((imgSource) {
+      print("捕捉登录二维码");
       String img = imgSource.toString().split(",")[1];
       var bytes = base64Decode(img);
       File("login.png").writeAsBytes(bytes);
     });
   });
 
-  page
+  await page
       .waitForSelector(
           "#app > div.navBar_home > div.navBar > div > div > div > div")
       .then((value) {
     print("登陆成功");
+    return true;
   });
-  return true;
+  return false;
 }
