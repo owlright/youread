@@ -1,12 +1,38 @@
+import 'dart:io';
+
 import 'package:puppeteer/protocol/runtime.dart';
 import 'package:puppeteer/puppeteer.dart';
+// import 'package:args/args.dart';
 import 'package:youread/youread.dart';
 
-void main() async {
+void main(List<String> arguments) async {
+  // TODO: 通过命令行参数指定浏览器路径
+  // TODO: 用户提供edge/chrome后，自动补充路径，实在不行才要求用户手动输入
+  // TODO: 直接访问https://weread.qq.com/#login就可以判断用户是否已经登录了
+  // final parser = ArgParser()
+  //   ..addFlag("executablePath", negatable: false, abbr: 'e');
+  // ArgResults argResults = parser.parse(arguments);
+  // if (argResults["executablePath"] as bool) {
+  //   print("executablePath: ${argResults.rest[0]}");
+  //   return;
+  // }
+  var chromePath = "";
+  if (Platform.isWindows) {
+    chromePath = "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe";
+  }
+  else if (Platform.isLinux) {
+    chromePath = "/usr/bin/microsoft-edge-stable";
+  }
+  else if (Platform.isMacOS) {
+    chromePath = "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge";
+  }
+  else {
+    throw UnsupportedError("Unsupported platform");
+  }
   // Download the Chrome binaries, launch it and connect to the "DevTools"
   var browser = await puppeteer.launch(
     // headless: false,
-    executablePath: "/usr/bin/microsoft-edge-stable",
+    executablePath: chromePath,
     userDataDir: "./user_data",
     defaultViewport: null,
   );
