@@ -29,7 +29,7 @@ Future<bool> login(Page page) async {
     } else {
       print("点击登录");
       loginButton.click().then((_) {
-          page.waitForSelector(".login_dialog_qrcode img").then((imgElem) {
+        page.waitForSelector(".login_dialog_qrcode img").then((imgElem) {
           imgElem?.property("src").then((imgSource) {
             print("捕捉登录二维码");
             String img = imgSource.toString().split(",")[1];
