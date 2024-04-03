@@ -28,18 +28,17 @@ Future<bool> login(Page page) async {
       throw Exception("找不到登录按钮");
     } else {
       print("点击登录");
-      loginButton.click();
+      loginButton.click().then((_) {
+          page.waitForSelector(".login_dialog_qrcode img").then((imgElem) {
+          imgElem?.property("src").then((imgSource) {
+            print("捕捉登录二维码");
+            String img = imgSource.toString().split(",")[1];
+            var bytes = base64Decode(img);
+            File("login.png").writeAsBytes(bytes);
+          });
+        });
+      });
     }
-  });
-
-  await page.waitForSelector("div.login_dialog_qrcode > img").then((imgElem) {
-    print(imgElem.toString());
-    imgElem?.property("src").then((imgSource) {
-      print("捕捉登录二维码");
-      String img = imgSource.toString().split(",")[1];
-      var bytes = base64Decode(img);
-      File("login.png").writeAsBytes(bytes);
-    });
   });
 
   await page
