@@ -18,14 +18,11 @@ void main(List<String> arguments) async {
   var chromePath = "";
   if (Platform.isWindows) {
     chromePath = "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe";
-  }
-  else if (Platform.isLinux) {
+  } else if (Platform.isLinux) {
     chromePath = "/usr/bin/microsoft-edge-stable";
-  }
-  else if (Platform.isMacOS) {
+  } else if (Platform.isMacOS) {
     chromePath = "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge";
-  }
-  else {
+  } else {
     throw UnsupportedError("Unsupported platform");
   }
   // Download the Chrome binaries, launch it and connect to the "DevTools"
@@ -52,8 +49,7 @@ void main(List<String> arguments) async {
   //     });
   //   });
   // }
-  var firstBook =
-      await bookShelf.$("a:nth-child(1) > div.wr_bookCover.cover > span");
+  var firstBook = await bookShelf.$("a:nth-child(1) > div.wr_bookCover.cover > span");
   await firstBook.click();
   Map<String, ScriptId> jsUrls = {};
   myPage.devTools.network.onRequestWillBeSent.listen((response) {
@@ -65,11 +61,8 @@ void main(List<String> arguments) async {
   });
   await myPage.waitForNavigation(wait: Until.networkIdle);
   // https://weread-1258476243.file.myqcloud.com/web/wrwebnjlogic/js/6.21ec78ec.js
-  var toolJsUrl =
-      await myPage.$("body > script:nth-child(4)").then((element) async {
-    return await element
-        .property("src")
-        .then((url) => url.toString().substring("JsHandle:".length));
+  var toolJsUrl = await myPage.$("body > script:nth-child(4)").then((element) async {
+    return await element.property("src").then((url) => url.toString().substring("JsHandle:".length));
   });
 
   if (!jsUrls.containsKey(toolJsUrl)) {
@@ -87,17 +80,14 @@ void main(List<String> arguments) async {
     columnNumber: 161610,
     condition: "",
   );
-  var jsSrc = debugger
-      .getScriptSource(jsUrls[toolJsUrl]!)
-      .then((value) => value.scriptSource);
+  var jsSrc = debugger.getScriptSource(jsUrls[toolJsUrl]!).then((value) => value.scriptSource);
 
   // 准备注入代码
   // 获取evaluateOnCallFrame的expression参数
   var expression = jsSrc.then((oldCode) {
     var varLen = "_0x15209c".length;
     var anchor = "['bottom']));}for(var ";
-    var objNameStartIndex =
-        oldCode.indexOf(anchor) + anchor.length + varLen + 1;
+    var objNameStartIndex = oldCode.indexOf(anchor) + anchor.length + varLen + 1;
     var objNameEndIndex = oldCode.indexOf(",", objNameStartIndex);
     return oldCode.substring(objNameStartIndex, objNameEndIndex);
   });
@@ -106,29 +96,21 @@ void main(List<String> arguments) async {
     print("监听到断点");
     var callFId = event.callFrames[0].callFrameId;
     print("callFrameId: $callFId");
-    var arrayObjId = await expression.then((value) => debugger
-        .evaluateOnCallFrame(callFId, value)
-        .then((response) => response.result.objectId));
+    var arrayObjId = await expression
+        .then((value) => debugger.evaluateOnCallFrame(callFId, value).then((response) => response.result.objectId));
     print("Array: $arrayObjId");
     // 获取Array前100个元素
     var functionDeclaration =
         "function(e,t,n){const i=Object.create(null);if(void 0===e||void 0===t||void 0===n)return;if(t-e<n)for(let n=e;n<=t;++n)n in this&&(i[n]=this[n]);else{const n=Object.getOwnPropertyNames(this);for(let o=0;o<n.length;++o){const s=n[o],r=Number(s)>>>0;String(r)===s&&e<=r&&r<=t&&(i[r]=this[r])}}return i}";
     var hundredArrayId = await runtime.callFunctionOn(functionDeclaration,
         objectId: arrayObjId,
-        arguments: [
-          CallArgument(value: 0),
-          CallArgument(value: 99),
-          CallArgument(value: 250000)
-        ]).then((response) {
+        arguments: [CallArgument(value: 0), CallArgument(value: 99), CallArgument(value: 250000)]).then((response) {
       return response.result.objectId;
     });
     print("hundredArrayId: $hundredArrayId");
     var text = await runtime
         .getProperties(hundredArrayId!,
-            ownProperties: false,
-            accessorPropertiesOnly: false,
-            generatePreview: true,
-            nonIndexedPropertiesOnly: false)
+            ownProperties: false, accessorPropertiesOnly: false, generatePreview: true, nonIndexedPropertiesOnly: false)
         .then((response) {
       List<String> tex = [];
       for (var res in response.result) {
