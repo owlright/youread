@@ -58,11 +58,14 @@ void main(List<String> arguments) async {
         jsUrls[cf.url] = cf.scriptId;
       }
     }
+    // print(jsUrls);
   });
   await myPage.waitForNavigation(wait: Until.networkIdle);
-  // https://weread-1258476243.file.myqcloud.com/web/wrwebnjlogic/js/6.21ec78ec.js
+  // 类似这样：https://weread-1258476243.file.myqcloud.com/web/wrwebnjlogic/js/6.21ec78ec.js
   var toolJsUrl = await myPage.$("body > script:nth-child(4)").then((element) async {
-    return await element.property("src").then((url) => url.toString().substring("JsHandle:".length));
+    var toolJs = await element.property("src").then((url) => url.toString().substring("JsHandle:".length));
+    // print(toolJs);
+    return toolJs;
   });
 
   if (!jsUrls.containsKey(toolJsUrl)) {
@@ -71,54 +74,35 @@ void main(List<String> arguments) async {
 
   // 打断点
   var debugger = myPage.devTools.debugger;
-  var runtime = myPage.devTools.runtime;
   await debugger.enable();
   debugger.setBreakpointsActive(true);
   await debugger.setBreakpointByUrl(
     0,
     url: toolJsUrl,
-    columnNumber: 161610,
+    columnNumber: 67151, // figure out the column number by yourself
     condition: "",
   );
   var jsSrc = debugger.getScriptSource(jsUrls[toolJsUrl]!).then((value) => value.scriptSource);
-
-  // 准备注入代码
-  // 获取evaluateOnCallFrame的expression参数
-  var expression = jsSrc.then((oldCode) {
-    var varLen = "_0x15209c".length;
-    var anchor = "['bottom']));}for(var ";
-    var objNameStartIndex = oldCode.indexOf(anchor) + anchor.length + varLen + 1;
-    var objNameEndIndex = oldCode.indexOf(",", objNameStartIndex);
-    return oldCode.substring(objNameStartIndex, objNameEndIndex);
-  });
 
   debugger.onPaused.listen((event) async {
     print("监听到断点");
     var callFId = event.callFrames[0].callFrameId;
     print("callFrameId: $callFId");
-    var arrayObjId = await expression
-        .then((value) => debugger.evaluateOnCallFrame(callFId, value).then((response) => response.result.objectId));
-    print("Array: $arrayObjId");
-    // 获取Array前100个元素
-    var functionDeclaration =
-        "function(e,t,n){const i=Object.create(null);if(void 0===e||void 0===t||void 0===n)return;if(t-e<n)for(let n=e;n<=t;++n)n in this&&(i[n]=this[n]);else{const n=Object.getOwnPropertyNames(this);for(let o=0;o<n.length;++o){const s=n[o],r=Number(s)>>>0;String(r)===s&&e<=r&&r<=t&&(i[r]=this[r])}}return i}";
-    var hundredArrayId = await runtime.callFunctionOn(functionDeclaration,
-        objectId: arrayObjId,
-        arguments: [CallArgument(value: 0), CallArgument(value: 99), CallArgument(value: 250000)]).then((response) {
-      return response.result.objectId;
+    var [cssObjStr, htmlObjStr] = await jsSrc.then((oldCode) {
+      final cssObjRegExp = RegExp(r" (\w+)=(\w+)\['dS'\]");
+      final htmlObjRegExp = RegExp(r";(\w+)=(\w+)\['dH'\]");
+
+      final cssMatch = cssObjRegExp.firstMatch(oldCode)!;
+      final htmlMatch = htmlObjRegExp.firstMatch(oldCode)!;
+      return [cssMatch.group(1)!, htmlMatch.group(1)!];
     });
-    print("hundredArrayId: $hundredArrayId");
-    var text = await runtime
-        .getProperties(hundredArrayId!,
-            ownProperties: false, accessorPropertiesOnly: false, generatePreview: true, nonIndexedPropertiesOnly: false)
-        .then((response) {
-      List<String> tex = [];
-      for (var res in response.result) {
-        tex.add(res.value!.preview!.properties[4].value!);
-      }
-      return tex;
+    await debugger.evaluateOnCallFrame(callFId, cssObjStr).then((response) {
+      print("css: ${response.result.type} ${response.result.value}");
     });
-    print(text.join());
+    await debugger.evaluateOnCallFrame(callFId, htmlObjStr).then((response) {
+      print("html: ${response.result.type} ${response.result.value}");
+    });
+
     await debugger.setBreakpointsActive(false);
     await debugger.resume();
     // Gracefully close the browser's process
