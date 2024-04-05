@@ -39,11 +39,7 @@ void main(List<String> arguments) async {
   // print(browser.wsEndpoint);
 
   var myPage = await browser.newPage();
-  // Go to a page and wait to be fully loaded
-  await myPage.goto("https://weread.qq.com/", wait: Until.networkIdle);
-  if (!await login(myPage)) {
-    throw RuntimeError("登陆失败");
-  }
+  await login(myPage);
 
   await myPage.goto("https://weread.qq.com/web/shelf", wait: Until.networkIdle);
   var bookShelf = await myPage.$("#routerView > div.shelf_list");

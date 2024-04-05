@@ -3,50 +3,42 @@ import 'package:puppeteer/puppeteer.dart';
 import 'dart:io';
 import 'dart:convert';
 
-Future<bool> login(Page page) async {
-  await page
-      .evaluate<String>('() => document.title')
-      .then((value) => print(value));
-
-  try {
-    await page.waitForSelector(
-      "div.wr_avatar.navBar_avatar > img",
-      timeout: const Duration(seconds: 1),
-    );
-    print("你已经登陆");
-    return true;
-  } catch (e) {
-    if (e is TimeoutException) {
-      print("请扫码");
+Future<void> login(Page page) async {
+  bool isLogined = false;
+  void listenLoginQrCode(Request request) {
+    if (!isLogined && request.url.contains("data:image/png")) {
+      if (request.url.length > 6000) {
+        final imgSrc = request.url.split(",")[1];
+        File("login.png").writeAsBytes(base64Decode(imgSrc));
+      }
     }
   }
 
-  await page
-      .waitForSelector("button.navBar_link.navBar_link_Login")
-      .then((loginButton) {
-    if (loginButton == null) {
-      throw Exception("找不到登录按钮");
-    } else {
-      print("点击登录");
-      loginButton.click().then((_) {
-        page.waitForSelector(".login_dialog_qrcode img").then((imgElem) {
-          imgElem?.property("src").then((imgSource) {
-            print("捕捉登录二维码");
-            String img = imgSource.toString().split(",")[1];
-            var bytes = base64Decode(img);
-            File("login.png").writeAsBytes(bytes);
-          });
-        });
+  void listenRereshButton(Response response) {
+    if (!isLogined && response.url.contains("login/getinfo")) {
+      // 监听刷新按钮的出现
+      page.waitForSelector("div.login_dialog_error > button", timeout: Duration.zero).then((retryButton) {
+        print("超时，请重新扫码！");
+        retryButton!.click();
       });
     }
-  });
+  }
 
+  // 监听用户的登陆二维码
+  page.onRequestFinished.listen(listenLoginQrCode);
+  page.onResponse.listen(listenRereshButton);
+
+  // Go to a page and wait to be fully loaded
+  await page.goto("https://weread.qq.com/#login", wait: Until.load);
+
+  // 一直等到用户登录
   await page
       .waitForSelector(
-          "#app > div.navBar_home > div.navBar > div > div > div > div")
-      .then((value) {
-    print("登陆成功");
-    return true;
+    "div.wr_avatar.navBar_avatar > img",
+    timeout: Duration.zero,
+  )
+      .then((_) {
+    isLogined = true;
+    print("登陆成功！");
   });
-  return false;
 }
