@@ -8,7 +8,6 @@ import 'package:youread/youread.dart';
 void main(List<String> arguments) async {
   // TODO: 通过命令行参数指定浏览器路径
   // TODO: 用户提供edge/chrome后，自动补充路径，实在不行才要求用户手动输入
-  // TODO: 直接访问https://weread.qq.com/#login就可以判断用户是否已经登录了
   // final parser = ArgParser()
   //   ..addFlag("executablePath", negatable: false, abbr: 'e');
   // ArgResults argResults = parser.parse(arguments);
