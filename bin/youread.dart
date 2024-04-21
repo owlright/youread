@@ -17,7 +17,7 @@ void main(List<String> arguments) async {
   // }
   var chromePath = "";
   if (Platform.isWindows) {
-    chromePath = "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe";
+    chromePath = "C://Program Files//Google//Chrome//Application//chrome.exe"; //
   } else if (Platform.isLinux) {
     chromePath = "/usr/bin/microsoft-edge-stable";
   } else if (Platform.isMacOS) {
