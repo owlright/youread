@@ -79,7 +79,7 @@ void main(List<String> arguments) async {
   await debugger.setBreakpointByUrl(
     0,
     url: toolJsUrl,
-    columnNumber: 67151, // figure out the column number by yourself
+    columnNumber: 108055, // figure out the column number by yourself
     condition: "",
   );
   var jsSrc = debugger.getScriptSource(jsUrls[toolJsUrl]!).then((value) => value.scriptSource);
