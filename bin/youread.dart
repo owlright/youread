@@ -111,6 +111,6 @@ void main(List<String> arguments) async {
 
   // 点击下一章按钮
   await myPage
-      .$("#routerView > div.app_content > div.readerFooter > div > button")
+      .$("div.readerFooter > div > button")
       .then((button) async => await button.click());
 }
